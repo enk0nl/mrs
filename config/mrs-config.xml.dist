@@ -22,6 +22,7 @@
   <!-- Users section, users can be added or modified using the command "mrs password" -->
   <users>
 <!--    <user name="scott" realm="MRS Administrator" password="b92ff7d60b994c8a0d2941ad9349e841"/>-->
+      <user name="admin" realm="MRS Administrator" password="e75d9285211a1f0db651b45f0385b700"/>
   </users>
   <!-- Server section -->
   <server addr="0.0.0.0" port="__MRS_PORT__" user="__MRS_USER__" pidfile="__MRS_RUN_DIR__/mrs.pid">
@@ -178,12 +179,12 @@
     <databank id="pdb" parser="pdb" enabled="true" update="daily" fasta="true">
       <name>PDB</name>
       <info>http://www.rcsb.org/pdb/</info>
-      <source delete="true" fetch="rsync.wwpdb.org::ftp_data/structures/divided/pdb/" port="33444" recursive="true">pdb/??/pdb????.ent.gz</source>
+      <source delete="true" fetch="rsync.wwpdb.org::ftp_data/structures/divided/pdb/" port="33444" recursive="true">pdb/all/pdb????.ent.gz</source>
     </databank>
     <databank id="dssp" parser="dssp" enabled="true" update="daily" fasta="true">
       <name>DSSP</name>
       <info>http://www.cmbi.umcn.nl/dssp.html</info>
-      <source delete="true" fetch="rsync://rsync.cmbi.ru.nl/dssp/" recursive="true">dssp/????.dssp</source>
+      <source delete="true" fetch="rsync://rsync.cmbi.umcn.nl/dssp/" recursive="true">dssp/????.dssp</source>
     </databank>
     <databank id="hssp" parser="hssp" enabled="true" update="daily" fasta="false">
       <name>HSSP</name>
@@ -313,6 +314,14 @@
       <name>mmCIF - macromolecular Crystallographic Information File</name>
       <info>http://mmcif.rcsb.org/</info>
       <source delete="true" fetch="rsync.wwpdb.org::ftp_data/structures/divided/mmCIF/" port="33444" recursive="true">mmCIF/????.cif.gz</source>
+    </databank>
+    <databank enabled="true" fasta="true" id="alphafold-human" parser="mmcif" update="daily">
+      <name>Alphafold HUMAN</name>
+      <aliases>
+        <alias>alphafold-human</alias>
+      </aliases>
+      <info>https://www.alphafold.ebi.ac.uk/</info>
+      <source delete="false" fetch="" recursive="true">alphafold/UP000005640_9606_HUMAN_v4/AF-??????-*-model_v4.cif.gz</source>
     </databank>
   </databanks>
 </mrs-config>

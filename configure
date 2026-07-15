@@ -70,6 +70,7 @@ my @libs = (
 open(my $h, "hostname -I|");
 my $host = <$h> if $h;
 close($h);
+#$host = `hostname -f` unless defined $host;
 $host = "chelonium.cmbi.umcn.nl";
 $host =~ s/\s+$//;
 
@@ -261,7 +262,7 @@ END
 	print " OK\n";
 	
 	# set the C++0x flag
-	# $cxxflags .= " -std=c++0x" unless $cxxflags and $cxxflags =~ m/-std=c\+\+0x/;
+	$cxxflags .= " -std=c++0x" unless $cxxflags and $cxxflags =~ m/-std=c\+\+0x/;
 	$cxxflags .= " -pthread" unless $cxxflags =~ m/-pthread/;
 	
 	# check the required libraries
@@ -290,18 +291,18 @@ END
 		or length(@boost_version) == 0 or not defined $boost_version[0])
 	{
 		die "\n\nCannot continue since you don't seem to have boost installed\n",
-			"Please install e.g. the libboost1.48-all-dev package and run configure again.\n";
+			"Please install e.g. the libboost-all-dev package and run configure again.\n";
 	}
 
 	@boost_version = split(m/_/, $boost_version[0]);
 	
-	die "MRS needs boost version 1.48 or higher\n" unless $boost_version[1] >= 48;
+	die "MRS needs boost version 1.74\n" unless $boost_version[1] >= 74;
 
 	# zeep libraries
 	if ($zeep)
 	{
-		$inc_dirs{"$zeep/include"} = 1;
-		$lib_dirs{"$zeep/lib"} = 1;
+		$inc_dirs{"$zeep"} = 1;
+		$lib_dirs{"$zeep"} = 1;
 	}
 
 	
@@ -322,12 +323,13 @@ END
 	push @libs, "boost_thread";
 	push @libs, "boost_filesystem";
 	push @libs, "boost_math_c99";
+	push @libs, "boost_random";
 	push @libs, "rt";
 
 	if (not CheckLib("zeep", $header_check, $lib_check))
 	{
-		die "libzeep 4.0 is not installed, either install the package libzeep-4.0\n",
-			"or download libzeep from ftp://ftp.cmbi.umcn.nl/pub/software/libzeep-4.0.0.tar.xz\n",
+		die "libzeep 4.0 is not installed, either install the package libzeep-dev\n",
+			"or download libzeep from https://github.com/mhekkel/libzeep/\n",
 			"and run configure again.\n";
 	}
 
@@ -378,32 +380,33 @@ END
 	$cxxflags = sprintf("$cxxflags %s %s", &perl_inc(), &ldopts());
 	$cxxflags =~ s/\s+/ /g;
 	
-#	$header_check =<<END;
-##include "EXTERN.h"
-##include "perl.h"
-##include "XSUB.h"
-##include <iostream>
-#int main() { std::cout << 1 << '\t' << 0; return 0; }
-#END
-#
-#	$lib_check =<<END;
-##include "EXTERN.h"
-##include "perl.h"
-##include "XSUB.h"
-#int main()
-#{ 
-#	int argc = 0;
-#	const char* env[] = { nullptr };
-#	const char* argv[] = { nullptr };
-#	PERL_SYS_INIT3(&argc, (char***)&argv, (char***)&env);
-#	return 0;
-#}
-#END
-#	if (not CheckLib("perl", $header_check, $lib_check))
-#	{
-#		die "\n\nCannot continue since libperl is not installed correctly\n",
-#			"Please install the libperl-dev package and run configure again\n";
-#	}
+	$header_check =<<END;
+#define PERL_NO_INLINE_FUNCTIONS	1
+#include "EXTERN.h"
+#include "XSUB.h"
+#include <iostream>
+int main() { std::cout << 1 << '\t' << 0; return 0; }
+END
+
+	$lib_check =<<END;
+#define PERL_NO_INLINE_FUNCTIONS	1
+#include "EXTERN.h"
+#include "perl.h"
+#include "XSUB.h"
+int main()
+{ 
+	int argc = 0;
+	const char* env[] = { nullptr };
+	const char* argv[] = { nullptr };
+	PERL_SYS_INIT3(&argc, (char***)&argv, (char***)&env);
+	return 0;
+}
+END
+	if (not CheckLib("perl", $header_check, $lib_check))
+	{
+		die "\n\nCannot continue since libperl is not installed correctly\n",
+			"Please install the libperl-dev package and run configure again\n";
+	}
 }
 
 sub CheckLib
