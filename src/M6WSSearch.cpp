@@ -52,11 +52,11 @@ bool CheckValidName(const string &name)
     if (name.compare("*") == 0)
         return true;
 
-    // allowed characters: alphanumeric and underscore
+    // allowed characters: alphanumeric, dash and underscore
     size_t i;
     for (i = 0; i < name.length(); i++)
     {
-        if (!isalnum(static_cast<unsigned char>(name.at(i))) && name.at(i) != '_')
+        if (!isalnum(static_cast<unsigned char>(name.at(i))) && name.at(i) != '_' && name.at(i) != '-')
             return false;
     }
 
