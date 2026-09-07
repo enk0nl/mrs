@@ -261,6 +261,13 @@ M6Server::M6Server(const zx::element* inConfig)
 			try
 			{
 				zx::document doc;
+                doc.external_entity_ref_handler =
+                   [](const std::string&,
+                      const std::string&,
+                      const std::string&) -> std::istream*
+                {
+                    throw zeep::exception("External XML entities are disabled");
+                };
 				doc.read(request.payload);
 				zeep::envelope env(doc);
 			
