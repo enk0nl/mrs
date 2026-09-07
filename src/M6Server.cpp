@@ -217,19 +217,7 @@ M6Server::M6Server(const zx::element* inConfig)
 	mount("info",			boost::bind(&M6Server::handle_info, this, _1, _2, _3));
 	mount("browse",			boost::bind(&M6Server::handle_browse, this, _1, _2, _3));
 
-	zx::node* realm = mConfig->find_first_node("admin/@realm");
-	if (realm == nullptr)
-	{
-		mount("admin", boost::bind(&M6Server::handle_admin, this, _1, _2, _3));
-		mount("ajax/blast/queue", boost::bind(&M6Server::handle_admin_blast_queue_ajax, this, _1, _2, _3));
-		mount("ajax/blast/delete", boost::bind(&M6Server::handle_admin_blast_delete_ajax, this, _1, _2, _3));
-	}
-	else
-	{
-		mount("admin", realm->str(), boost::bind(&M6Server::handle_admin, this, _1, _2, _3));
-		mount("ajax/blast/queue", realm->str(), boost::bind(&M6Server::handle_admin_blast_queue_ajax, this, _1, _2, _3));
-		mount("ajax/blast/delete", realm->str(), boost::bind(&M6Server::handle_admin_blast_delete_ajax, this, _1, _2, _3));
-	}
+    // DISABLED: the endpoints admin, ajax/blast/queue and ajax/blast/delete
 
 	LOG(DEBUG_,"M6Server: add processors");
 

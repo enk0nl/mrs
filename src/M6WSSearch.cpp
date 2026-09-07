@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <cctype>
 
 #include <zeep/dispatcher.hpp>
 
@@ -42,6 +43,25 @@ const string kSearchNS = "https://mrs.cmbi.umcn.nl/mrsws/search";
 //
 //	M6 SOAP Search Server implementation
 //
+
+bool CheckValidName(const string &name)
+{
+    // This function checks whether the user has inserted script attacks instead of names.
+
+    // exceptions:
+    if (name.compare("*") == 0)
+        return true;
+
+    // allowed characters: alphanumeric and underscore
+    size_t i;
+    for (i = 0; i < name.length(); i++)
+    {
+        if (!isalnum(static_cast<unsigned char>(name.at(i))) && name.at(i) != '_')
+            return false;
+    }
+
+    return true;
+}
 
 M6WSSearch::M6WSSearch(M6Server &inServer, const M6DbList &inLoadedDatabanks,
 					   const string &inNS, const string &inService)
@@ -108,6 +128,9 @@ M6WSSearch::M6WSSearch(M6Server &inServer, const M6DbList &inLoadedDatabanks,
 void M6WSSearch::GetDatabankInfo(const string &databank,
 								 vector<WSSearchNS::DatabankInfo> &info)
 {
+    if (!CheckValidName(databank))
+        THROW(("invalid databank name"));
+
 	vector<string> unaliased(mServer.UnAlias(databank));
 
 	for (const M6LoadedDatabank &db : mLoadedDatabanks)
@@ -196,12 +219,21 @@ void M6WSSearch::GetDatabankInfo(const string &databank,
 
 void M6WSSearch::Count(const std::string &db, const std::string &booleanquery, uint32 &response)
 {
+    if (!CheckValidName(db))
+        THROW(("invalid databank name"));
+
 	response = mServer.Count(db, booleanquery);
 }
 
 void M6WSSearch::GetEntry(const string &inDatabank, const string &inID,
 						  boost::optional<WSSearchNS::Format> inFormat, string &outEntry)
 {
+    if (!CheckValidName(inDatabank))
+        THROW(("invalid databank name"));
+
+    if (!CheckValidName(inID))
+        THROW(("invalid id"));
+
 	switch (boost::get_optional_value_or(inFormat, WSSearchNS::plain))
 	{
 		case WSSearchNS::plain:
@@ -224,6 +256,12 @@ void M6WSSearch::GetEntry(const string &inDatabank, const string &inID,
 void M6WSSearch::GetEntryLinesMatchingRegularExpression(
 	const string &inDatabank, const string &inID, const string &inRE, string &outText)
 {
+    if (!CheckValidName(inDatabank))
+        THROW(("invalid databank name"));
+
+    if (!CheckValidName(inID))
+        THROW(("invalid id"));
+
 	istringstream s(mServer.GetEntry(inDatabank, inID, "plain"));
 	ostringstream result;
 
@@ -249,6 +287,15 @@ void M6WSSearch::GetMetaData(const string &inDatabank, const string &inID, const
 	M6Databank *db;
 	uint32 docNr;
 
+    if (!CheckValidName(inDatabank))
+        THROW(("invalid databank name"));
+
+    if (!CheckValidName(inID))
+        THROW(("invalid id"));
+
+    if (!CheckValidName(inMeta))
+        THROW(("invalid meta"));
+
 	tie(db, docNr) = mServer.GetEntryDatabankAndNr(inDatabank, inID);
 
 	unique_ptr<M6Document> doc(db->Fetch(docNr));
@@ -263,6 +310,13 @@ void M6WSSearch::Find(const string &db, const vector<string> &queryterms,
 					  boost::optional<int> resultoffset, boost::optional<int> maxresultcount,
 					  vector<WSSearchNS::FindResult> &response)
 {
+    if (!CheckValidName(db))
+        THROW(("invalid databank name"));
+
+    for (const string &term : queryterms)
+        if (!CheckValidName(term))
+            THROW(("invalid query term"));
+
 	if (db == "all" or db == "*" or db.empty())
 	{
 		if (maxresultcount <= 0)
@@ -446,6 +500,9 @@ void M6WSSearch::FindBoolean(const string &inDatabank, const WSSearchNS::Boolean
 							 boost::optional<int> resultoffset, boost::optional<int> maxresultcount,
 							 vector<WSSearchNS::FindResult> &response)
 {
+    if (!CheckValidName(inDatabank))
+        THROW(("invalid databank name"));
+
 	if (inDatabank == "*" or inDatabank == "all" or inDatabank == "")
 	{
 		if (not maxresultcount or (maxresultcount.get() > 5 or maxresultcount.get() <= 0))
@@ -508,6 +565,15 @@ void M6WSSearch::GetLinked(const string &db, const string &id, const string &lin
 	M6Databank *ddb;
 	uint32 docNr;
 
+    if (!CheckValidName(db))
+        THROW(("invalid databank name"));
+
+    if (!CheckValidName(linkedDb))
+        THROW(("invalid linked databank name"));
+
+    if (!CheckValidName(id))
+        THROW(("invalid id"));
+
 	tie(sdb, docNr) = mServer.GetEntryDatabankAndNr(db, id);
 	if (sdb == nullptr)
 		THROW(("entry %s not found in %s", id.c_str(), db.c_str()));
@@ -555,6 +621,16 @@ void M6WSSearch::GetLinked(const string &db, const string &id, const string &lin
 void M6WSSearch::GetLinkedEx(const string &db, const string &linkedDb,
 							 const vector<string> &ids, vector<WSSearchNS::GetLinkedExResult> &response)
 {
+    if (!CheckValidName(db))
+        THROW(("invalid databank name"));
+
+    if (!CheckValidName(linkedDb))
+        THROW(("invalid linked databank name"));
+
+    for (const string &id : ids)
+        if (!CheckValidName(id))
+            THROW(("invalid id"));
+
 	for (string id : ids)
 	{
 		uint32 docNr;
